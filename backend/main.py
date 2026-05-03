@@ -23,8 +23,7 @@ app.add_middleware(
         "https://localhost:3000",
         "https://ai-visibility-intelligence-mwrp0knq7-hiteshs-projects-d1b4e4ec.vercel.app",
         "https://ai-visibility-intelligence.vercel.app/" ,  
-        "https://ai-visibility-intelligence-git-main-hiteshs-projects-d1b4e4ec.vercel.app/" ,
-        "https://ai-visibility-intelligence-5lz788y0a-hiteshs-projects-d1b4e4ec.vercel.app/" ,
+        
     ],
     allow_credentials=True,
     allow_methods=["*"],
