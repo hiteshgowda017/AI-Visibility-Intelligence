@@ -18,12 +18,10 @@ class AuditRequest(BaseModel):
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https://ai-visibility-intelligence.*\.vercel\.app",
     allow_origins=[
         "http://localhost:3000",
         "https://localhost:3000",
-        " https://ai-visibility-intelligence-12cj.vercel.app/", 
-        
-        
     ],
     allow_credentials=True,
     allow_methods=["*"],
