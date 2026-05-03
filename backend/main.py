@@ -1,57 +1,54 @@
-from __future__ import annotations
-
-from typing import Any, Dict
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from config import FRONTEND_ORIGIN
+from config import settings
 from engine import run_audit
-from services.company_lookup import get_categories, get_companies_by_category
+from services.company_lookup import get_categories, get_brands
 
-app = FastAPI(
-    title="AEO Diagnostic API",
-    description="Answer Engine Optimization Diagnostic Platform API",
-    version="1.0.0",
-)
+app = FastAPI(title="AEO Diagnostic API")
+
+origins = [
+    settings.FRONTEND_ORIGIN,
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        FRONTEND_ORIGIN,
-        "http://127.0.0.1:3000",
-    ],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
 class AuditRequest(BaseModel):
-    brand: str = Field(default="", max_length=120)
-    category: str = Field(default="", max_length=120)
-    description: str = Field(default="", max_length=500)
+    category: str
+    brand: str
+    description: str
 
 
 @app.get("/")
-def healthcheck() -> Dict[str, str]:
-    return {
-        "status": "ok",
-        "service": "AEO Diagnostic API",
-    }
+def health():
+    return {"status": "ok", "service": "AEO Diagnostic API"}
 
 
 @app.get("/categories")
-def categories() -> Dict[str, list[str]]:
+def categories():
     return {"categories": get_categories()}
 
 
-@app.get("/companies/{category}")
-def companies(category: str) -> Dict[str, list[Dict[str, Any]]]:
-    return {"companies": get_companies_by_category(category)}
+@app.get("/brands/{category}")
+def brands(category: str):
+    return {"brands": get_brands(category)}
 
 
 @app.post("/audit")
-def audit(payload: AuditRequest) -> Dict[str, Any]:
-    return run_audit(payload.model_dump())
+def audit(payload: AuditRequest):
+    return run_audit(
+        {
+            "category": payload.category,
+            "brand": payload.brand,
+            "description": payload.description,
+        }
+    )
