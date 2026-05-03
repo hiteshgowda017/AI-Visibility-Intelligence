@@ -1,0 +1,26 @@
+globalThis.__BUILD_MANIFEST = {
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "polyfillFiles": [
+    "static/chunks/0ceq_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
+  "lowPriorityFiles": [
+    "static/development/_buildManifest.js",
+    "static/development/_ssgManifest.js",
+    "static/development/_clientMiddlewareManifest.js"
+  ],
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_0gjt-4_._.js",
+    "static/chunks/0ceq_next_dist_compiled_next-devtools_index_0eu-wct.js",
+    "static/chunks/0ceq_next_dist_compiled_react-dom_0nn577c._.js",
+    "static/chunks/0ceq_next_dist_compiled_react-server-dom-turbopack_11dp2up._.js",
+    "static/chunks/0ceq_next_dist_compiled_02c2hv.._.js",
+    "static/chunks/0ceq_next_dist_client_0qvrjtd._.js",
+    "static/chunks/0ceq_next_dist_06hpavb._.js",
+    "static/chunks/0ceq_@swc_helpers_cjs_08l8f7k._.js",
+    "static/chunks/aeo-diagnostic_frontend_0rqeker._.js",
+    "static/chunks/turbopack-aeo-diagnostic_frontend_0tu2q~t._.js"
+  ]
+};
