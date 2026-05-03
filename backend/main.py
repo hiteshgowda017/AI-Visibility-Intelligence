@@ -21,8 +21,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://localhost:3000",
-        "https://ai-visibility-intelligence-mwrp0knq7-hiteshs-projects-d1b4e4ec.vercel.app",
-        "https://ai-visibility-intelligence.vercel.app/" ,  
+        " https://ai-visibility-intelligence-12cj.vercel.app/", 
+        
         
     ],
     allow_credentials=True,
