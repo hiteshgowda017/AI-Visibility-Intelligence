@@ -1,19 +1,20 @@
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
 *.pyd
-
-# Env
+*.env
 .env
-.env.local
 
-# Reports
-*.pdf
+# Backend
+backend/.env
+backend/__pycache__/
+backend/data/__pycache__/
+backend/services/__pycache__/
 
-# Node
+# Next
+frontend/.next/
 node_modules/
-.next/
 
 # OS
 .DS_Store

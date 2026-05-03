@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AEO Diagnostic",
-  description: "Premium AI visibility benchmarking for modern brands.",
+  description:
+    "Premium AI visibility benchmarking platform for measuring brand performance across GPT, Claude, and Gemini.",
 };
 
 export default function RootLayout({

@@ -1,146 +1,133 @@
-# backend/engine.py
-
-from __future__ import annotations
-
 from typing import Any, Dict, List
 
 from services.company_lookup import (
-    build_competitor_table,
-    get_company,
+    find_company,
+    get_categories,
+    get_competitor_leaderboard,
     get_top_competitor,
 )
 
 
-def _clamp_score(value: int) -> int:
-    return max(0, min(100, value))
+def _clamp(value: int, minimum: int = 0, maximum: int = 100) -> int:
+    return max(minimum, min(maximum, value))
 
 
-def _compute_model_scores(base_score: int) -> Dict[str, int]:
-    gpt_score = _clamp_score(base_score + 3)
-    claude_score = _clamp_score(base_score - 2)
-    gemini_score = _clamp_score(base_score - 8)
-
+def _build_model_scores(base_score: int) -> Dict[str, int]:
+    """
+    Deterministic model scoring derived from master score.
+    No randomness.
+    """
     return {
-        "GPT-4": gpt_score,
-        "Claude": claude_score,
-        "Gemini": gemini_score,
+        "GPT-4": _clamp(base_score + 4),
+        "Claude": _clamp(base_score - 2),
+        "Gemini": _clamp(base_score - 6),
     }
 
 
-def _compute_rank(competitors: List[Dict[str, Any]], brand: str) -> int:
-    normalized_brand = brand.strip().lower()
-
-    for index, company in enumerate(competitors, start=1):
-        if company["name"].strip().lower() == normalized_brand:
-            return index
-
-    return len(competitors) + 1 if competitors else 1
-
-
-def _compute_main_weakness(
+def _build_main_weakness(
     brand: str,
+    top_competitor: str,
     brand_score: int,
-    top_competitor: Dict[str, Any] | None,
+    competitor_score: int,
 ) -> str:
-    if not top_competitor:
-        return "Limited category visibility data available."
+    gap = competitor_score - brand_score
 
-    score_gap = top_competitor["score"] - brand_score
-    competitor_name = top_competitor["name"]
-
-    if score_gap >= 10:
-        return f"Significantly lower category authority than {competitor_name}."
-    if score_gap >= 5:
-        return f"Lower category authority than {competitor_name}."
-    if score_gap >= 1:
-        return f"Weaker AI recall consistency than {competitor_name}."
-
-    return "Low comparative differentiation in AI-generated recommendations."
+    if gap <= 2:
+        return f"{brand} trails {top_competitor} slightly in comparative authority."
+    if gap <= 6:
+        return f"{brand} shows weaker AI citation depth than {top_competitor}."
+    if gap <= 10:
+        return f"{brand} has lower category authority than {top_competitor}."
+    return f"{brand} significantly underperforms {top_competitor} in AI visibility."
 
 
-def _compute_recommendations(
+def _build_recommendations(
     brand: str,
-    top_competitor: Dict[str, Any] | None,
+    top_competitor: str,
+    category: str,
 ) -> List[str]:
-    competitor_name = top_competitor["name"] if top_competitor else "top competitors"
-
     return [
-        f"Improve category-specific authority against {competitor_name}.",
-        f"Build stronger comparison content vs {competitor_name}.",
-        "Increase review and trust signal coverage.",
+        f"Improve category-specific authority against {top_competitor}.",
+        f"Build stronger comparison content between {brand} and {top_competitor}.",
+        f"Increase review and trust signal coverage in the {category} category.",
         "Improve entity visibility across AI search engines.",
+        "Strengthen structured mentions across high-authority third-party sources.",
     ]
 
 
-def run_audit(payload: Dict[str, Any]) -> Dict[str, Any]:
-    brand = str(payload.get("brand", "")).strip()
-    category = str(payload.get("category", "")).strip()
-    description = str(payload.get("description", "")).strip()
-
-    competitors = build_competitor_table(category)
-
-    if not category or not competitors:
+def run_audit(
+    brand: str,
+    category: str,
+    description: str | None = None,
+) -> Dict[str, Any]:
+    """
+    Stable deterministic audit engine.
+    Always returns valid JSON-safe response.
+    """
+    if category not in get_categories():
         return {
-            "brand": brand or "Unknown Brand",
-            "category": category or "Unknown Category",
+            "brand": brand,
+            "category": category,
+            "description": description or "",
             "score": 0,
-            "rank": 1,
+            "rank": 0,
             "top_competitor": "N/A",
-            "main_weakness": "Category not found in benchmark dataset.",
+            "main_weakness": "Invalid category selected.",
             "model_scores": {"GPT-4": 0, "Claude": 0, "Gemini": 0},
             "competitors": [],
-            "recommendations": [
-                "Select a valid category to generate an audit.",
-                "Ensure the brand belongs to the selected category.",
-                "Provide a clearer business description.",
-                "Re-run the audit with valid benchmark inputs.",
-            ],
+            "recommendations": ["Select a valid category to run the audit."],
         }
 
-    company = get_company(category, brand)
+    selected_company = find_company(category, brand)
+    leaderboard = get_competitor_leaderboard(category)
 
-    if not company:
-        fallback_score = max(55, competitors[-1]["score"] - 4)
-        inferred_brand = brand or "Unknown Brand"
-        top_competitor = competitors[0]
-
-        synthetic_competitors = sorted(
-            competitors + [{"name": inferred_brand, "score": fallback_score}],
-            key=lambda item: item["score"],
-            reverse=True,
-        )
-
-        rank = _compute_rank(synthetic_competitors, inferred_brand)
+    if not selected_company:
+        fallback_top = leaderboard[0] if leaderboard else {"name": "N/A", "score": 0}
 
         return {
-            "brand": inferred_brand,
+            "brand": brand,
             "category": category,
-            "score": fallback_score,
-            "rank": rank,
-            "top_competitor": top_competitor["name"],
-            "main_weakness": f"Brand authority is not yet established against {top_competitor['name']}.",
-            "model_scores": _compute_model_scores(fallback_score),
-            "competitors": synthetic_competitors[:8],
+            "description": description or "",
+            "score": 0,
+            "rank": 0,
+            "top_competitor": fallback_top["name"],
+            "main_weakness": "Selected brand was not found in this category.",
+            "model_scores": {"GPT-4": 0, "Claude": 0, "Gemini": 0},
+            "competitors": leaderboard[:5],
             "recommendations": [
-                f"Improve category-specific authority against {top_competitor['name']}.",
-                f"Create comparison pages against {top_competitor['name']}.",
-                "Strengthen trust, review, and citation signals.",
-                "Expand brand entity coverage across AI search engines.",
+                "Choose a listed brand to generate a valid audit.",
+                "Ensure the selected category and brand match correctly.",
             ],
         }
 
-    score = int(company["score"])
-    top_competitor = get_top_competitor(category, brand)
-    rank = _compute_rank(competitors, brand)
+    brand_score = int(selected_company["score"])
+    ranked_brand = next(
+        (item for item in leaderboard if item["name"].lower() == brand.lower()),
+        {"rank": 0},
+    )
+
+    top_competitor = get_top_competitor(category, brand) or {"name": "N/A", "score": 0}
+    competitor_name = str(top_competitor["name"])
+    competitor_score = int(top_competitor["score"])
 
     return {
-        "brand": company["name"],
+        "brand": brand,
         "category": category,
-        "score": score,
-        "rank": rank,
-        "top_competitor": top_competitor["name"] if top_competitor else "N/A",
-        "main_weakness": _compute_main_weakness(company["name"], score, top_competitor),
-        "model_scores": _compute_model_scores(score),
-        "competitors": competitors[:8],
-        "recommendations": _compute_recommendations(company["name"], top_competitor),
+        "description": description or "",
+        "score": brand_score,
+        "rank": ranked_brand["rank"],
+        "top_competitor": competitor_name,
+        "main_weakness": _build_main_weakness(
+            brand,
+            competitor_name,
+            brand_score,
+            competitor_score,
+        ),
+        "model_scores": _build_model_scores(brand_score),
+        "competitors": leaderboard[:5],
+        "recommendations": _build_recommendations(
+            brand,
+            competitor_name,
+            category,
+        ),
     }

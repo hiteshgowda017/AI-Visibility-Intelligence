@@ -1,54 +1,53 @@
+from typing import Optional
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from config import settings
 from engine import run_audit
-from services.company_lookup import get_categories, get_brands
+from services.company_lookup import get_categories, get_company_names_by_category
 
 app = FastAPI(title="AEO Diagnostic API")
 
-origins = [
-    settings.FRONTEND_ORIGIN,
-    "http://localhost:3000",
-]
+
+class AuditRequest(BaseModel):
+    brand: str
+    category: str
+    description: Optional[str] = ""
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://localhost:3000",
+        "https://placeholder.vercel.app",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-class AuditRequest(BaseModel):
-    category: str
-    brand: str
-    description: str
-
-
 @app.get("/")
-def health():
+def health_check():
     return {"status": "ok", "service": "AEO Diagnostic API"}
 
 
 @app.get("/categories")
-def categories():
+def fetch_categories():
     return {"categories": get_categories()}
 
 
-@app.get("/brands/{category}")
-def brands(category: str):
-    return {"brands": get_brands(category)}
+@app.get("/companies/{category}")
+def fetch_companies(category: str):
+    return {"companies": get_company_names_by_category(category)}
 
 
 @app.post("/audit")
-def audit(payload: AuditRequest):
+def audit_brand(payload: AuditRequest):
     return run_audit(
-        {
-            "category": payload.category,
-            "brand": payload.brand,
-            "description": payload.description,
-        }
+        brand=payload.brand,
+        category=payload.category,
+        description=payload.description,
     )
