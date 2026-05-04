@@ -273,7 +273,7 @@ FRONTEND_ORIGIN=http://localhost:3000
 
 ## Author
 
-**Hitesh Gowda**
+**Hitesh Gowda H**
 Built as a modern AI visibility intelligence platform for AI-first brand discovery and competitive benchmarking.
 
 * GitHub: [https://github.com/hiteshgowda017](https://github.com/hiteshgowda017)
