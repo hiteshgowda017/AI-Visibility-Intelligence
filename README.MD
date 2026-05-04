@@ -6,7 +6,7 @@ It delivers a structured AI visibility report with brand ranking, competitor ben
 
 ## Preview
 
-![AI Visibility Intelligence Dashboard](assets/demo.png)
+![AI Visibility Intelligence Dashboard](frontend/assets/demo.png)
 
 ## Live Demo
 
